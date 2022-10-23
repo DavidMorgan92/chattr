@@ -1,0 +1,18 @@
+{
+	"private": true,
+	"workspaces": [
+		"client",
+		"common",
+		"server"
+	],
+	"devDependencies": {
+		"concurrently": "^7.5.0",
+		"prettier": "^2.7.1"
+	},
+	"scripts": {
+		"start": "yarn workspace server start",
+		"build": "yarn workspace client build",
+		"watch": "concurrently \"yarn workspace client start\" \"yarn workspace server watch\"",
+		"prettier": "prettier --write **/*"
+	}
+}

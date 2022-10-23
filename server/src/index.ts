@@ -1,6 +1,7 @@
 import path from 'path';
 import express from 'express';
 import * as dotenv from 'dotenv';
+import { WebSocketServer } from 'ws';
 import Message from 'common/message';
 
 dotenv.config();
@@ -26,6 +27,12 @@ app.post('/api/chat', (req, res) => {
 	res.json(message);
 });
 
-app.listen(process.env.PORT, () => {
+const server = app.listen(process.env.PORT, () => {
 	console.log(`Server listening on port ${process.env.PORT}`);
+});
+
+const wsServer = new WebSocketServer({ server });
+
+wsServer.on('connection', socket => {
+	socket.on('message', message => console.log(message));
 });

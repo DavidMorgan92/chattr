@@ -1,42 +1,74 @@
-import React, { FormEvent, useEffect, useState } from 'react';
+import React, {
+	FormEvent,
+	useState,
+	useRef,
+	useEffect,
+	MutableRefObject,
+} from 'react';
 import Message from 'common/message';
 import './app.scss';
 
 export default function App() {
 	const [chatLog, setChatLog] = useState([] as Message[]);
-	const [currentMessage, setCurrentMessage] = useState('');
+	const [nickname, setNickname] = useState('');
+	const [message, setMessage] = useState('');
 
+	const socket: MutableRefObject<WebSocket | null> = useRef(null);
+
+	// On mount
 	useEffect(() => {
-		const controller = new AbortController();
+		// Close any existing socket
+		if (socket.current) socket.current.close();
 
-		fetch('/api/chat', { signal: controller.signal })
-			.then(response => response.json())
-			.then(json => setChatLog(json));
+		// Open a websocket to the server
+		socket.current = new WebSocket('ws://localhost:3001');
 
-		return () => controller.abort();
+		// On socket opened
+		socket.current.addEventListener('open', event => {
+			console.log('Socket open', event);
+		});
+
+		// On socket closed
+		socket.current.addEventListener('close', event => {
+			console.log('Socket closed', event);
+		});
+
+		// On message received
+		socket.current.addEventListener('message', event => {
+			// Add received message to chat log
+			const json = JSON.parse(event.data.toString());
+			setChatLog(prev => [
+				...prev,
+				{ sender: json.sender, message: json.message },
+			]);
+		});
 	}, []);
 
+	// On message form submit
 	function onSubmit(event: FormEvent<HTMLFormElement>) {
+		// Prevent page refresh
 		event.preventDefault();
 
-		const message = {
-			sender: 'me',
-			message: currentMessage.trim(),
+		// Do nothing if there is no socket or the socket isn't open
+		if (!socket.current || socket.current.readyState !== WebSocket.OPEN) return;
+
+		// Construct the object to send
+		const data: Message = {
+			sender: nickname,
+			message: message.trim(),
 		};
 
-		if (!message.message) {
-			return;
-		}
+		// Do nothing if the message is empty
+		if (!data.message) return;
 
-		setCurrentMessage('');
+		// Send the message
+		socket.current.send(JSON.stringify(data));
 
-		fetch('/api/chat', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(message),
-		})
-			.then(response => response.json())
-			.then(json => setChatLog(prev => [...prev, json]));
+		// Clear the current message input
+		setMessage('');
+
+		// Add the sent message to the chat log
+		setChatLog(prev => [...prev, data]);
 	}
 
 	return (
@@ -50,12 +82,19 @@ export default function App() {
 					);
 				})}
 			</div>
-			<form className='chat-input' onSubmit={onSubmit}>
+			<form className='message-form' onSubmit={onSubmit}>
 				<input
 					type='text'
-					name='text'
-					value={currentMessage}
-					onChange={e => setCurrentMessage(e.target.value)}
+					placeholder='Nickname'
+					value={nickname}
+					onChange={e => setNickname(e.target.value)}
+				/>
+				<input
+					className='message-input'
+					type='text'
+					placeholder='Type your message'
+					value={message}
+					onChange={e => setMessage(e.target.value)}
 				/>
 				<input type='submit' value='Send' />
 			</form>

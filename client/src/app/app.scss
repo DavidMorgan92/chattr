@@ -14,11 +14,11 @@
 	overflow-y: auto;
 }
 
-.chat-input {
+.message-form {
 	display: flex;
 	gap: 0.5rem;
 
-	> input[type='text'] {
+	> .message-input {
 		flex-grow: 1;
 	}
 }

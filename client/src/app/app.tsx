@@ -21,7 +21,7 @@ export default function App() {
 		if (socket.current) socket.current.close();
 
 		// Open a websocket to the server
-		socket.current = new WebSocket('ws://localhost:3001');
+		socket.current = new WebSocket(process.env.REACT_APP_WS_SERVER || '');
 
 		// On socket opened
 		socket.current.addEventListener('open', event => {

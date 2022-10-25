@@ -28,6 +28,11 @@ export default function App() {
 			console.log('Socket open', event);
 		});
 
+		// On socket error
+		socket.current.addEventListener('error', event => {
+			console.log('Socket error', event);
+		});
+
 		// On socket closed
 		socket.current.addEventListener('close', event => {
 			console.log('Socket closed', event);
@@ -35,12 +40,18 @@ export default function App() {
 
 		// On message received
 		socket.current.addEventListener('message', event => {
-			// Add received message to chat log
-			const json = JSON.parse(event.data.toString());
-			setChatLog(prev => [
-				...prev,
-				{ sender: json.sender, message: json.message },
-			]);
+			console.log('Message received', event);
+
+			try {
+				// Add received message to chat log
+				const json = JSON.parse(event.data.toString());
+				setChatLog(prev => [
+					...prev,
+					{ sender: json.sender, message: json.message },
+				]);
+			} catch (error) {
+				console.log('Failed to parse message', error);
+			}
 		});
 	}, []);
 
@@ -49,22 +60,19 @@ export default function App() {
 		// Prevent page refresh
 		event.preventDefault();
 
-		// Do nothing if there is no socket or the socket isn't open
+		// Do nothing more if there is no socket or the socket isn't open
 		if (!socket.current || socket.current.readyState !== WebSocket.OPEN) return;
 
-		// Construct the object to send
-		const data: Message = {
-			sender: nickname,
-			message: message.trim(),
-		};
+		// Construct the data to send
+		const data: Message = { sender: nickname.trim(), message: message.trim() };
 
-		// Do nothing if the message is empty
+		// Do nothing more if the message is empty
 		if (!data.message) return;
 
-		// Send the message
+		// Send the data
 		socket.current.send(JSON.stringify(data));
 
-		// Clear the current message input
+		// Clear the message input
 		setMessage('');
 
 		// Add the sent message to the chat log
@@ -77,13 +85,15 @@ export default function App() {
 				{chatLog.map((message, index) => {
 					return (
 						<div key={index}>
-							<span>{message.sender}</span>: <span>{message.message}</span>
+							<span className='nickname'>{message.sender}</span>:&nbsp;
+							<span className='message'>{message.message}</span>
 						</div>
 					);
 				})}
 			</div>
 			<form className='message-form' onSubmit={onSubmit}>
 				<input
+					className='nickname-input'
 					type='text'
 					placeholder='Nickname'
 					value={nickname}

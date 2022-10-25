@@ -14,11 +14,20 @@
 	overflow-y: auto;
 }
 
+.nickname {
+	font-weight: bold;
+}
+
 .message-form {
 	display: flex;
 	gap: 0.5rem;
+}
 
-	> .message-input {
-		flex-grow: 1;
-	}
+.nickname-input {
+	min-width: 3rem;
+}
+
+.message-input {
+	flex-grow: 1;
+	min-width: 6rem;
 }

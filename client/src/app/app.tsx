@@ -17,9 +17,6 @@ export default function App() {
 
 	// On mount
 	useEffect(() => {
-		// Close any existing socket
-		if (socket.current) socket.current.close();
-
 		// Open a websocket to the server
 		socket.current = new WebSocket(process.env.REACT_APP_WS_SERVER || '');
 
@@ -53,6 +50,8 @@ export default function App() {
 				console.log('Failed to parse message', error);
 			}
 		});
+
+		return () => socket.current?.close();
 	}, []);
 
 	// On message form submit
